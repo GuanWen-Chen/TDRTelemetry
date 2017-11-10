@@ -5,6 +5,9 @@ function drawChart(name, dataset) {
                 show: true,
                 lineWidth: 2.0
             }
+        },
+        xaxis: {
+            mode: "time",
         }
     };
     $.plot($(name), dataset, options);

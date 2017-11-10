@@ -9,6 +9,7 @@ function drawLineGraph(fileName, divId) {
             for (date in normalLine) {
                 dates.push(date)
             }
+            dates.sort();
             for (version in normalLine[dates[0]]) {
                versions.push(version)
             }
@@ -19,7 +20,10 @@ function drawLineGraph(fileName, divId) {
                 localMap['label'] = "Firefox" + versions[version];
                 let dataArray = [];
                 for (d in dates) {
-                    dataArray.push([d, normalLine[dates[d]][versions[version]]]);
+                    dateStr = []
+                    dateStr = dates[d].split("-")
+                    console.log(dateStr[0] + "~~~~" + dateStr[1] + "~~~~~~" + dateStr[2])
+                    dataArray.push([new Date(dateStr[0], dateStr[1], dateStr[2]).getTime(), normalLine[dates[d]][versions[version]]]);
                 }
                 localMap['data'] = dataArray;
                 localMap['color'] = color;
