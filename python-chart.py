@@ -9,6 +9,10 @@ import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 import time
 
+urlStr = "https://crash-stats.mozilla.com/api/SuperSearch/?product=Firefox"
+tdrLogStr = "&graphics_critical_error=~Detected%20device%20reset&graphics_critical_error=~D3D11%20skip%20BeginFrame%20with%20with%20device-removed&graphics_critical_error=~D3D11%20detected%20a%20device%20reset"
+latestVersion = 58
+
 def ShowCrashRate():
     res = requests.get("http://localhost:8888/files/output/tdrHistogram.json")
     #print res.text
@@ -82,7 +86,6 @@ def ShowLineGraph():
 
 
 def GetCrashNum(date, version):
-    urlStr = "https://crash-stats.mozilla.com/api/SuperSearch/?product=Firefox"
     preDate = date - datetime.timedelta(1)
     dateStr = "&date=>" + preDate.strftime("%Y-%m-%d") + "&date=<" + date.strftime("%Y-%m-%d")
     verStr = "&version=" + str(version) + ".0a1&version=" + str(version) + ".0&version=" + str(version) +".0b"
@@ -92,15 +95,22 @@ def GetCrashNum(date, version):
     return jRes['total']
 
 def GetTDRNum(date, version):
-    urlStr = "https://crash-stats.mozilla.com/api/SuperSearch/?product=Firefox"
     preDate = date - datetime.timedelta(1)
     dateStr = "&date=>" + preDate.strftime("%Y-%m-%d") + "&date=<" + date.strftime("%Y-%m-%d")
     verStr = "&version=" + str(version) + ".0a1&version=" + str(version) + ".0&version=" + str(version) +".0b"
-    tdrLogStr = "&graphics_critical_error=~Detected%20device%20reset&graphics_critical_error=~D3D11%20skip%20BeginFrame%20with%20with%20device-removed&graphics_critical_error=~D3D11%20detected%20a%20device%20reset"
     print urlStr + dateStr + verStr + tdrLogStr
     res = requests.get(urlStr + dateStr + verStr + tdrLogStr)
     jRes = json.loads(res.text)
     return jRes['total']
+
+def GetTDRSigs(version):
+    date = datetime.datetime.now()
+    preDate = date - datetime.timedelta(30)
+    dateStr = "&date=>" + preDate.strftime("%Y-%m-%d") + "&date=<" + date.strftime("%Y-%m-%d")
+    verStr = "&version=" + str(version) + ".0a1&version=" + str(version) + ".0&version=" + str(version) +".0b"
+    res = requests.get(urlStr + dateStr + verStr + tdrLogStr)
+    jRes = json.loads(res.text)
+    return jRes['facets']['signature']
 
 def LoadFiles():
     dates = {}
@@ -139,7 +149,6 @@ def UpdateFiles(dates):
 def ShowCrashHistogram():
     dates = LoadFiles()
     date = datetime.datetime.now().date()
-    latestVersion = 58
 
     for i in range(1,30):
         date = date - datetime.timedelta(1)
@@ -164,6 +173,13 @@ def ShowCrashHistogram():
     UpdateFiles(dates)
     DrawLineGraph(dates, 2)
 
+def FetchCrashReports():
+    crashReports = {}
+    for version in range(latestVersion - 5, latestVersion+1):
+        crashReports[version] = GetTDRSigs(version)
+    SaveJson(crashReports, "crashReports.json")
+
+
 class ShowLine(Thread):
     def __init__(self, val):
         Thread.__init__(self)
@@ -185,6 +201,7 @@ def main():
     # ShowCrashRate()
     # show pie chart according to version
     # ShowTDRPieChart()
+    FetchCrashReports()
     # show histogram
     #ShowLineGraph()
     thread1 = ShowLine(1)
