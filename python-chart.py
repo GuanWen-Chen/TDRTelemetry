@@ -48,6 +48,10 @@ def DrawLineGraph(obj, num):
                    ncol=5, mode="expand", borderaxespad=0.)
     plt.show()
 
+def SaveJson(data, name):
+    with open("json/"+name, 'w+') as fp:
+        json.dump(data, fp)
+
 def ShowLineGraph():
     latestVersion = 58
     res = requests.get("http://localhost:8888/files/output/tdrHistogram.json")
@@ -66,6 +70,8 @@ def ShowLineGraph():
                 tdrNum = float(obj['tdr'][key][version])
             localDict[version] = (tdrNum/float(obj['total'][key][version]))*100
         dates[date[0]] = localDict
+
+    SaveJson(dates, "normalLine.json")
     dates = collections.OrderedDict(sorted(dates.items()))
     for date in dates:
         print str(date)
@@ -84,6 +90,7 @@ def GetCrashNum(date, version):
     res = requests.get(urlStr + dateStr + verStr)
     jRes = json.loads(res.text)
     return jRes['total']
+
 def GetTDRNum(date, version):
     urlStr = "https://crash-stats.mozilla.com/api/SuperSearch/?product=Firefox"
     preDate = date - datetime.timedelta(1)
@@ -153,6 +160,7 @@ def ShowCrashHistogram():
         for version in dates[date]:
             print str(version) + " : " + str(dates[date][version])
 
+    SaveJson(dates, "crashLine.json")
     UpdateFiles(dates)
     DrawLineGraph(dates, 2)
 
