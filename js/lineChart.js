@@ -3,7 +3,7 @@ function drawChart(name, dataset) {
         series: {
             lines: {
                 show: true,
-                lineWidth: 1.2
+                lineWidth: 2.0
             }
         }
     };
