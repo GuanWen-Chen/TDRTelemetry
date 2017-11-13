@@ -66,7 +66,7 @@ def ShowLineGraph():
         date = key.split(" ")
         localDict = {}
         for version in obj['total'][key]:
-            if int(version) < latestVersion - 5:
+            if int(version) < latestVersion - 3:
                 continue
             if version not in obj['tdr'][key]:
                 tdrNum = 0
@@ -165,7 +165,7 @@ def ShowCrashHistogram():
         localDict = {}
         if str(date) in dates:
             continue
-        for version in range(latestVersion - 5, latestVersion+1):
+        for version in range(latestVersion - 3, latestVersion+1):
             # GetCrashNum in date with version
             # GetTDRNum in date with version
             localDict[version] = (float(GetTDRNum(date, version)) / float(GetCrashNum(date, version))) * 100
@@ -185,7 +185,7 @@ def ShowCrashHistogram():
 
 def FetchCrashReports():
     crashReports = {}
-    for version in range(latestVersion - 5, latestVersion+1):
+    for version in range(latestVersion - 3, latestVersion+1):
         crashReports[version] = GetTDRSigs(version)
         for sig in crashReports[version]:
             sig['total'] = GetSigNum(version, sig['term'])
@@ -213,7 +213,6 @@ def main():
     # ShowCrashRate()
     # show pie chart according to version
     # ShowTDRPieChart()
-    FetchCrashReports()
     # show histogram
     #ShowLineGraph()
     thread1 = ShowLine(1)
@@ -226,5 +225,6 @@ def main():
     thread1.join()
     thread2.join()
 
+    FetchCrashReports()
 if __name__ == "__main__" :
     sys.exit(main())
