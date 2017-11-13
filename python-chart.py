@@ -112,6 +112,16 @@ def GetTDRSigs(version):
     jRes = json.loads(res.text)
     return jRes['facets']['signature']
 
+def GetSigNum(version, sig):
+    date = datetime.datetime.now()
+    preDate = date - datetime.timedelta(30)
+    dateStr = "&date=>" + preDate.strftime("%Y-%m-%d") + "&date=<" + date.strftime("%Y-%m-%d")
+    verStr = "&version=" + str(version) + ".0a1&version=" + str(version) + ".0&version=" + str(version) +".0b"
+    res = requests.get(urlStr + dateStr + verStr + "&signature=~" + sig)
+    jRes = json.loads(res.text)
+    print jRes['total']
+    return jRes['total']
+
 def LoadFiles():
     dates = {}
 
@@ -177,6 +187,8 @@ def FetchCrashReports():
     crashReports = {}
     for version in range(latestVersion - 5, latestVersion+1):
         crashReports[version] = GetTDRSigs(version)
+        for sig in crashReports[version]:
+            sig['total'] = GetSigNum(version, sig['term'])
     SaveJson(crashReports, "crashReports.json")
 
 

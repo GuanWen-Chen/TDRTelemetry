@@ -63,17 +63,36 @@ function showTDRCrashes() {
             if (version < latestVersion - 2)
                 continue;
             count = 0
+            var row = table.insertRow(-1);
+            var cellsig = row.insertCell(0);
+            var cellnum = row.insertCell(1);
+            var cellper = row.insertCell(2);
+            cellsig.innerHTML = "Signature";
+            cellnum.innerHTML = "TRD Number";
+            cellper.innerHTML = "Percentage";
+            cellsig.style.backgroundColor = "#9999ff";
+            cellnum.style.backgroundColor = "#9999ff";
+            cellper.style.backgroundColor = "#9999ff";
+            cellsig.style.width = "80%";
+            cellnum.style.textAlign = "center";;
+            cellper.style.textAlign = "center";;
+
             for (sig in json[version]) {
                 if (count >= 10) break;
                 count += 1
                 var row = table.insertRow(-1);
                 var cell1 = row.insertCell(0);
                 var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
                 cell1.innerHTML = "<a href='" + reportLink + json[version][sig]['term'] + tdrLog + "'>" + json[version][sig]['term'] + "</a>";
                 cell2.innerHTML = json[version][sig]['count'];
-                cell1.style.width = "90%";
+                cell3.innerHTML = ((parseFloat(json[version][sig]['count']) / parseFloat(json[version][sig]['total']))*100).toFixed(2);
+                cell1.style.width = "80%";
                 cell1.style.backgroundColor = "#99ff99";
                 cell2.style.backgroundColor = "#ffffcc";
+                cell3.style.backgroundColor = "#ffffcc";
+                cell2.style.textAlign = "center";
+                cell3.style.textAlign = "center";
                 console.log(sig + " : " + json[version][sig]['count'] + " | " +  json[version][sig]['term'])
             }
         }
