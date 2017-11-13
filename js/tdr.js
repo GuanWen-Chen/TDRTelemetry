@@ -22,8 +22,11 @@ function drawLineGraph(fileName, divId) {
                 for (d in dates) {
                     dateStr = []
                     dateStr = dates[d].split("-")
-                    console.log(dateStr[0] + "~~~~" + dateStr[1] + "~~~~~~" + dateStr[2])
-                    dataArray.push([new Date(dateStr[0], dateStr[1], dateStr[2]).getTime(), normalLine[dates[d]][versions[version]]]);
+                    console.log(dateStr[0] + "~~~~" + dateStr[1] + "~~~~~~" + parseInt(dateStr[2]))
+                    plotDate = new Date(parseInt(dateStr[0]), parseInt(dateStr[1]), parseInt(dateStr[2]))
+                    plotDate.setDate(plotDate.getDate() - 29)
+                    dataArray.push([plotDate.getTime(), normalLine[dates[d]][versions[version]]]);
+                    //dataArray.push([new Date(2017, 11 ,1).getTime(), normalLine[dates[d]][versions[version]]]);
                 }
                 localMap['data'] = dataArray;
                 localMap['color'] = color;
