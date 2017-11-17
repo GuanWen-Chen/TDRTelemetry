@@ -1,64 +1,127 @@
-function drawLineGraph(fileName, divId) {
-    var onSuccess = function(json) {
-            var normalLine;
-            var color = 0;
-            var colorStep = 111;
-            normalLine = json;
-            var dates = [];
-            var versions = [];
-            for (date in normalLine) {
-                dates.push(date)
-            }
-            dates.sort();
-            for (version in normalLine[dates[0]]) {
-               versions.push(version)
-            }
-            var dataset = []
+var latestVersion = 59;
+var tdrLog = "&graphics_critical_error=~Detected%20device%20reset&graphics_critical_error=~D3D11%20skip%20BeginFrame%20with%20with%20device-removed&graphics_critical_error=~D3D11%20detected%20a%20device%20reset"
+var reportLink = "https://crash-stats.mozilla.com/signature/?_sort=-date&signature="
+var superAPILink = "https://crash-stats.mozilla.com/api/SuperSearch/?product=Firefox"
+var timeWindow = 2
 
-            for (version in versions) {
-                let localMap = {};
-                localMap['label'] = "Firefox" + versions[version];
-                let dataArray = [];
-                for (d in dates) {
-                    dateStr = []
-                    dateStr = dates[d].split("-")
-                    console.log(dateStr[0] + "~~~~" + dateStr[1] + "~~~~~~" + parseInt(dateStr[2]))
-                    plotDate = new Date(parseInt(dateStr[0]), parseInt(dateStr[1]), parseInt(dateStr[2]))
-                    plotDate.setDate(plotDate.getDate() - 29)
-                    dataArray.push([plotDate.getTime(), normalLine[dates[d]][versions[version]]]);
-                    //dataArray.push([new Date(2017, 11 ,1).getTime(), normalLine[dates[d]][versions[version]]]);
-                }
-                localMap['data'] = dataArray;
-                localMap['color'] = color;
-                color += colorStep;
-                dataset.push(localMap);
-            }
-            drawChart(divId, dataset);
+function drawLineGraph(json, divId) {
+    var color = 0;
+    var colorStep = 111;
+    var dates = [];
+    var dataset = []
+    for (date in json[latestVersion]) {
+        dates.push(date)
+    }
+    dates.sort();
+    console.log(dates)
+    for (version in json) {
+        let localMap = {};
+        localMap['label'] = "Firefox" + version;
+        let dataArray = [];
+        for (d in dates) {
+            dateStr = []
+            dateStr = dates[d].split("-")
+            console.log(dateStr[0] + "~~~~" + dateStr[1] + "~~~~~~" + parseInt(dateStr[2]))
+            plotDate = new Date(parseInt(dateStr[0]), parseInt(dateStr[1]), parseInt(dateStr[2]))
+            plotDate.setDate(plotDate.getDate() - 29)
+            dataArray.push([plotDate.getTime(), json[version][dates[d]]]);
+        }
+        localMap['data'] = dataArray;
+        localMap['color'] = color;
+        color += colorStep;
+        dataset.push(localMap);
+    }
+    drawChart(divId, dataset);
+}
+
+function formatJsDate(date) {
+    dateS = (date.getDate() < 10)? "0" + date.getDate(): date.getDate();
+
+    return date.getYear() + 1900 + "-" + (date.getMonth() + 1) + "-" + dateS
+}
+
+function getSuperAPILink(date, version, isTDR = false) {
+    preDate = new Date()
+    preDate.setDate(date.getDate() - 1)
+    dateStr = "&date>" + formatJsDate(preDate) + "&date=<" + formatJsDate(date)
+    verStr = "&version=" + version + ".0a1&version=" + version + ".0&version=" + version +".0b"
+    result = superAPILink + dateStr + verStr
+    if (isTDR) {
+        return result + tdrLog
+    }
+    return result
+}
+
+function drawNormalLineGraph() {
+    var onSuccess = function(json) {
+            drawLineGraph(json, "#normalLineGraph");
         };
     var onError = function (xhr, textStatus, errorThrown) {
         console.log(textStatus);
         console.log(errorThrown);
     }
     $.ajax({
-        url: "json/" + fileName,
+        url: "https://analysis-output.telemetry.mozilla.org/tdr-usage/data/tdr.json",
         dataType: 'json',
     })
     .done(onSuccess)
     .error(onError);
-
-}
-
-function drawNormalLineGraph() {
-    drawLineGraph("normalLine.json", "#normalLineGraph");
 }
 
 function drawCrashLineGraph() {
-    drawLineGraph("crashLine.json", "#crashLineGraph");
+    json = {}
+
+    var onSuccess = function(json) {
+        versionTrend[formatJsDate(curDate)] = json['total']
+    };
+    var onTDRSuccess = function(json) {
+        if (versionTrend[formatJsDate(curDate)] != 0) {
+            versionTrend[formatJsDate(curDate)] = 100.0 * parseFloat(json['total']) / parseFloat(versionTrend[formatJsDate(curDate)]);
+        }
+        console.log(versionTrend[formatJsDate(curDate)])
+    };
+
+
+    var onError = function (xhr, textStatus, errorThrown) {
+        console.log(textStatus);
+        console.log(errorThrown);
+    }
+
+    for (let version = latestVersion - 2; version < latestVersion + 1; version++) {
+
+        curDate = new Date()
+        curDate.setDate(curDate.getDate() - timeWindow)
+        console.log("Version :" + version)
+        versionTrend = {}
+        for (let i = 0; i < timeWindow; i++) {
+            console.log("Date " + formatJsDate(curDate))
+            curDate.setDate(curDate.getDate() + 1)
+            $.ajax({
+                url: getSuperAPILink(curDate, version),
+                type: "get",
+                dataType: 'json',
+                async: false,
+            })
+            .done(onSuccess)
+            .error(onError);
+
+            $.ajax({
+                url: getSuperAPILink(curDate, version, true),
+                type: "get",
+                dataType: 'json',
+                async: false,
+            })
+            .done(onTDRSuccess)
+            .error(onError);
+
+        }
+        console.log(versionTrend)
+        json[version] = versionTrend
+    }
+    drawLineGraph(json, "#crashLineGraph");
 }
 
 function showTDRCrashes() {
-    reportLink = "https://crash-stats.mozilla.com/signature/?_sort=-date&signature="
-    tdrLog = "&graphics_critical_error=~Detected%20device%20reset&graphics_critical_error=~D3D11%20skip%20BeginFrame%20with%20with%20device-removed&graphics_critical_error=~D3D11%20detected%20a%20device%20reset"
     var onSuccess = function(json) {
         latestVersion = 58
         for (version in json) {
@@ -107,7 +170,7 @@ function showTDRCrashes() {
 
     $.ajax({
         url: "json/crashReports.json",
-        dataType: 'json',
+        dataType: 'jsonp',
     })
     .done(onSuccess)
     .error(onError);
@@ -118,4 +181,4 @@ drawNormalLineGraph();
 
 drawCrashLineGraph();
 
-showTDRCrashes();
+//showTDRCrashes();
