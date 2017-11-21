@@ -1,7 +1,14 @@
-table {
+body > table {
     border-collapse: collapse;
+    width: 600px;
+    height: 300px;
+    margin: auto;
 }
 
 table, th, td {
     border: 1px solid black;
+}
+
+h3, h5 {
+    text-align: center;
 }
