@@ -78,7 +78,7 @@ function drawCrashLineGraph() {
         console.log(errorThrown);
     }
     $.ajax({
-        url: "json/crashLine.json",
+        url: "https://analysis-output.telemetry.mozilla.org/tdr-usage/data/crashLine.json",
         dataType: 'json',
         beforeSend: function(xhr) {
             if (xhr.overrideMimeType) {
@@ -150,7 +150,7 @@ function showTDRCrashes() {
     }
 
     $.ajax({
-        url: "json/crashReports.json",
+        url: "https://analysis-output.telemetry.mozilla.org/tdr-usage/data/crashReports.json",
         dataType: 'json',
         beforeSend: function(xhr) {
             if (xhr.overrideMimeType) {
